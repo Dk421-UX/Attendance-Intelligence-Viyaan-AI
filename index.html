@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>AI Attendance Intelligence</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Smart attendance analytics for college students — Viyaan AI">
+<meta name="theme-color" content="#00c8ff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Attendance AI">
+<link rel="icon"             type="image/png" href="./logo.png">
+<link rel="apple-touch-icon" href="./logo.png">
+<link rel="manifest"         href="./manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Google Analytics GA4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LH1F6M0JKQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-LH1F6M0JKQ', { send_page_view: false });
+  gtag('event', 'page_view', {
+    page_title:    document.title,
+    page_location: window.location.href
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════════ */
+:root {
+  /* Colors */
+  --bg:        #060b14;
+  --surface:   #0d1a2d;
+  --surface2:  #0a1520;
+  --surface3:  #0f1f35;
+  --border:    rgba(0,200,255,0.12);
+  --border-hi: rgba(0,200,255,0.28);
+  --accent:    #00c8ff;
+  --accent2:   #0066ff;
+  --safe:      #00e676;
+  --warn:      #ffb300;
+  --crit:      #ff3d5a;
+  --text:      #e8f4ff;
+  --text-dim:  #a8c4d8;
+  --muted:     #4a6fa5;
+  --card-bg:   rgba(0,200,255,0.04);
+
+  /* Spacing (8px rhythm) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+
+  /* Transitions */
+  --t-fast:   150ms ease;
+  --t-base:   200ms ease;
+  --t-slow:   300ms ease;
+  --t-spring: 400ms cubic-bezier(0.34,1.56,0.64,1);
+
+  /* Shadows */
+  --shadow-card:  0 2px 12px rgba(0,0,0,0.3);
+  --shadow-hover: 0 8px 24px rgba(0,200,255,0.12);
+  --shadow-btn:   0 4px 20px rgba(0,200,255,0.2);
+  --shadow-btn-h: 0 6px 28px rgba(0,200,255,0.38);
+  --glow-focus:   0 0 0 3px rgba(0,200,255,0.2);
+}
+
+/* ═══════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: var(--sp-8) var(--sp-4) 64px;
+  background-image:
+    radial-gradient(ellipse 80% 40% at 50% -10%, rgba(0,100,255,0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 90% 60%, rgba(0,200,255,0.07) 0%, transparent 60%);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════ */
+.wrap { max-width: 700px; margin: 0 auto; }
+
+/* ═══════════════════════════════════════════════════
+   BRAND
+═══════════════════════════════════════════════════ */
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--sp-8);
+  padding-top: var(--sp-2);
+}
+.logo-ring {
+  width: 92px; height: 92px;
+  border-radius: var(--r-xl);
+  padding: 2px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  box-shadow: 0 0 32px rgba(0,200,255,0.32), var(--shadow-card);
+  margin-bottom: var(--sp-4);
+  transition: transform var(--t-slow), box-shadow var(--t-slow);
+  cursor: default;
+}
+.logo-ring:hover {
+  transform: scale(1.06) rotate(-2deg);
+  box-shadow: 0 0 48px rgba(0,200,255,0.45), var(--shadow-card);
+}
+.logo-ring img {
+  width: 100%; height: 100%;
+  border-radius: 18px;
+  object-fit: cover;
+  background: #fff;
+  display: block;
+}
+.brand h1 {
+  font-size: clamp(20px, 5vw, 28px);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(90deg, #fff 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--sp-1);
+}
+.tagline {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ═══════════════════════════════════════════════════
+   QUICK CHECK PANEL
+═══════════════════════════════════════════════════ */
+.quick-panel {
+  background: linear-gradient(135deg, rgba(0,102,255,0.11), rgba(0,200,255,0.05));
+  border: 1px solid rgba(0,200,255,0.22);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+  margin-bottom: var(--sp-5);
+  transition: border-color var(--t-base), box-shadow var(--t-base);
+}
+.quick-panel:hover {
+  border-color: rgba(0,200,255,0.32);
+  box-shadow: var(--shadow-hover);
+}
+.quick-panel .section-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: var(--sp-3);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.quick-panel .section-label::before {
+  content: '';
+  display: block;
+  width: 20px; height: 1px;
+  background: var(--accent);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.quick-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.quick-row input {
+  flex: 1;
+  min-width: 110px;
+  padding: 11px 14px;
+  background: rgba(0,0,0,0.45);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  outline: none;
+  transition: border-color var(--t-base), box-shadow var(--t-base), background var(--t-base);
+}
+.quick-row input:focus {
+  border-color: var(--accent);
+  background: rgba(0,0,0,0.6);
+  box-shadow: var(--glow-focus);
+}
+.quick-row input::placeholder { color: var(--muted); opacity: 0.8; }
+
+/* display toggled exclusively by JS */
+.quick-result {
+  margin-top: var(--sp-3);
+  background: rgba(0,0,0,0.28);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+  align-items: center;
+  animation: fadeSlideUp 0.22s ease forwards;
+}
+.q-stat { text-align: center; }
+.q-num  { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; transition: color var(--t-base); }
+.q-lbl  { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: var(--sp-1); }
+
+/* ═══════════════════════════════════════════════════
+   SECTION TITLE
+═══════════════════════════════════════════════════ */
+.section { margin-bottom: var(--sp-5); }
+.section-title {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: var(--sp-3);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.section-title::before {
+  content: '';
+  display: block;
+  width: 20px; height: 1px;
+  background: var(--accent);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* ═══════════════════════════════════════════════════
+   INPUTS (global)
+═══════════════════════════════════════════════════ */
+input[type="text"],
+input[type="number"],
+input:not([type]) {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color var(--t-base), box-shadow var(--t-base), background var(--t-base);
+  -webkit-appearance: none;
+}
+input:focus {
+  border-color: var(--accent);
+  background: var(--surface3);
+  box-shadow: var(--glow-focus);
+}
+input::placeholder { color: var(--muted); opacity: 0.75; }
+/* Remove number spinners in webkit */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+/* ═══════════════════════════════════════════════════
+   SUBJECT ROWS
+═══════════════════════════════════════════════════ */
+.subject-row {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-3);
+  transition: border-color var(--t-base), box-shadow var(--t-base), transform var(--t-fast);
+}
+.subject-row:hover {
+  border-color: var(--border-hi);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+.subject-row .top-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.subject-row .top-row input {
+  background: rgba(0,0,0,0.3);
+  border-color: rgba(0,200,255,0.09);
+  padding: 9px 12px;
+  font-size: 13px;
+}
+.subject-row .top-row input:focus { background: rgba(0,0,0,0.5); }
+
+.sub-actions { display: flex; gap: var(--sp-2); }
+
+.btn-present, .btn-absent {
+  flex: 1;
+  padding: 8px var(--sp-2);
+  border: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  transition: background var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+  font-family: 'Syne', sans-serif;
+  user-select: none;
+}
+.btn-present {
+  background: rgba(0,230,118,0.14);
+  color: var(--safe);
+  border: 1px solid rgba(0,230,118,0.28);
+}
+.btn-present:hover  { background: rgba(0,230,118,0.24); box-shadow: 0 2px 10px rgba(0,230,118,0.15); }
+.btn-present:active { transform: scale(0.97); }
+
+.btn-absent {
+  background: rgba(255,61,90,0.13);
+  color: var(--crit);
+  border: 1px solid rgba(255,61,90,0.28);
+}
+.btn-absent:hover  { background: rgba(255,61,90,0.23); box-shadow: 0 2px 10px rgba(255,61,90,0.15); }
+.btn-absent:active { transform: scale(0.97); }
+
+.btn-remove {
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid rgba(255,61,90,0.18);
+  border-radius: var(--r-sm);
+  color: var(--crit);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+  user-select: none;
+}
+.btn-remove:hover  { background: rgba(255,61,90,0.1); border-color: rgba(255,61,90,0.35); }
+.btn-remove:active { transform: scale(0.95); }
+
+/* ═══════════════════════════════════════════════════
+   BUTTONS — PRIMARY
+═══════════════════════════════════════════════════ */
+.btn-primary {
+  width: 100%;
+  padding: 13px var(--sp-4);
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border: none;
+  border-radius: var(--r-md);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  letter-spacing: 0.4px;
+  transition: transform var(--t-base), box-shadow var(--t-base), filter var(--t-base);
+  box-shadow: var(--shadow-btn);
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background var(--t-fast);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-btn-h);
+  filter: brightness(1.08);
+}
+.btn-primary:active {
+  transform: translateY(0) scale(0.99);
+  box-shadow: var(--shadow-btn);
+  filter: brightness(0.96);
+}
+.btn-primary:active::after { background: rgba(0,0,0,0.06); }
+
+/* ─── SECONDARY ─── */
+.btn-secondary {
+  flex: 1;
+  padding: 10px var(--sp-4);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  transition: border-color var(--t-base), color var(--t-base), background var(--t-base), transform var(--t-fast);
+  user-select: none;
+}
+.btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0,200,255,0.05);
+}
+.btn-secondary:active { transform: scale(0.97); }
+
+/* ─── ADD ─── */
+.btn-add {
+  width: 100%;
+  margin: var(--sp-2) 0 var(--sp-3);
+  padding: 11px;
+  background: rgba(0,102,255,0.1);
+  border: 1px dashed rgba(0,102,255,0.36);
+  border-radius: var(--r-md);
+  color: var(--accent2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  letter-spacing: 0.4px;
+  transition: background var(--t-base), border-color var(--t-base), transform var(--t-fast);
+  user-select: none;
+}
+.btn-add:hover {
+  background: rgba(0,102,255,0.18);
+  border-color: var(--accent2);
+}
+.btn-add:active { transform: scale(0.98); }
+
+/* ─── SHARE ─── */
+.btn-share {
+  width: 100%;
+  margin-top: var(--sp-2);
+  padding: 11px;
+  background: rgba(0,200,255,0.07);
+  border: 1px solid rgba(0,200,255,0.2);
+  border-radius: var(--r-md);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  transition: background var(--t-base), border-color var(--t-base), transform var(--t-fast);
+  user-select: none;
+}
+.btn-share:hover  { background: rgba(0,200,255,0.14); border-color: rgba(0,200,255,0.35); }
+.btn-share:active { transform: scale(0.98); }
+
+.btn-row { display: flex; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+
+/* ═══════════════════════════════════════════════════
+   RESULT CARDS
+═══════════════════════════════════════════════════ */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0;
+}
+/* Cards animate in */
+#resultCards { animation: fadeSlideUp 0.3s ease forwards; }
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-4) var(--sp-3);
+  text-align: center;
+  transition: border-color var(--t-base), box-shadow var(--t-base), transform var(--t-base);
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,200,255,0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+.card:hover {
+  border-color: var(--border-hi);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+.card-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: var(--sp-2);
+}
+.card-value {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+  line-height: 1.25;
+  transition: color var(--t-base);
+}
+.card-value.safe { color: var(--safe); }
+.card-value.warn { color: var(--warn); }
+.card-value.crit { color: var(--crit); }
+.card.wide { grid-column: span 3; text-align: left; }
+.card.wide .card-value { font-size: 13px; font-weight: 500; line-height: 1.6; color: var(--text-dim); }
+
+/* ═══════════════════════════════════════════════════
+   SEMESTER CONFIG
+═══════════════════════════════════════════════════ */
+.sem-config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+.sem-config-grid label {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: var(--sp-1);
+}
+
+/* ═══════════════════════════════════════════════════
+   SEMESTER PROGRESS BAR
+═══════════════════════════════════════════════════ */
+.progress-bar-wrap { margin-top: var(--sp-3); }
+.progress-bar-bg {
+  background: rgba(255,255,255,0.07);
+  border-radius: 99px;
+  height: 8px;
+  overflow: hidden;
+  margin-top: var(--sp-1);
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border-radius: 99px;
+  transition: width 0.9s cubic-bezier(0.4,0,0.2,1);
+  width: 0%;
+  position: relative;
+}
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 20px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 99px;
+  filter: blur(4px);
+}
+
+/* ═══════════════════════════════════════════════════
+   CHART
+═══════════════════════════════════════════════════ */
+.chart-wrap {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  margin: var(--sp-4) 0;
+  transition: border-color var(--t-base), box-shadow var(--t-base);
+  animation: fadeSlideUp 0.3s ease forwards;
+}
+.chart-wrap:hover { border-color: var(--border-hi); box-shadow: var(--shadow-hover); }
+canvas { width: 100% !important; display: block; }
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+  margin-top: var(--sp-3);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+}
+.legend span { display: flex; align-items: center; gap: var(--sp-1); }
+
+/* ═══════════════════════════════════════════════════
+   RISK PANEL
+═══════════════════════════════════════════════════ */
+.risk-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 14px;
+  transition: background var(--t-fast);
+}
+.risk-item:last-child { border-bottom: none; }
+.risk-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 9px;
+  border-radius: var(--r-sm);
+  font-family: 'JetBrains Mono', monospace;
+  transition: transform var(--t-fast);
+}
+.risk-badge.safe { background: rgba(0,230,118,0.13); color: var(--safe); }
+.risk-badge.warn { background: rgba(255,179,0,0.13);  color: var(--warn); }
+.risk-badge.crit { background: rgba(255,61,90,0.13);  color: var(--crit); }
+
+/* ═══════════════════════════════════════════════════
+   HISTORY
+═══════════════════════════════════════════════════ */
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 13px;
+}
+.history-item:last-child { border-bottom: none; }
+.history-item .h-date { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+.history-item .h-pct  { font-weight: 700; font-family: 'JetBrains Mono', monospace; transition: color var(--t-base); }
+
+/* ═══════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════ */
+.toast {
+  position: fixed;
+  bottom: var(--sp-6);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface);
+  border: 1px solid rgba(0,200,255,0.3);
+  color: var(--text);
+  padding: 10px 22px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 9999;
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,200,255,0.1);
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════
+   PANEL
+═══════════════════════════════════════════════════ */
+.panel {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-4);
+  transition: border-color var(--t-base), box-shadow var(--t-base);
+}
+.panel:hover { border-color: var(--border-hi); box-shadow: var(--shadow-hover); }
+.empty-msg {
+  color: var(--muted);
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  opacity: 0.75;
+}
+
+/* ═══════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════ */
+.footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: var(--sp-8);
+  letter-spacing: 0.4px;
+  opacity: 0.8;
+}
+.footer b { color: var(--accent); font-weight: 700; }
+
+/* ═══════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════ */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE — MOBILE
+═══════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  body { padding: 20px 12px 72px; }
+
+  .brand { margin-bottom: var(--sp-6); }
+  .logo-ring { width: 80px; height: 80px; }
+
+  .cards { grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+  .card.wide { grid-column: span 2; }
+  .card { padding: var(--sp-3) var(--sp-2); }
+  .card-value { font-size: 16px; }
+
+  .subject-row .top-row { grid-template-columns: 1fr 1fr; }
+  .subject-row .top-row input:first-child { grid-column: span 2; }
+
+  .btn-row { flex-wrap: wrap; gap: var(--sp-2); }
+  .btn-row .btn-secondary { min-width: calc(50% - 4px); }
+
+  .legend { gap: var(--sp-3); font-size: 11px; }
+
+  .quick-row { flex-direction: column; }
+  .quick-row input { min-width: unset; width: 100%; }
+
+  .sem-config-grid { grid-template-columns: 1fr; }
+
+  .toast { font-size: 12px; padding: 9px 18px; white-space: normal; text-align: center; max-width: 88vw; }
+}
+
+@media (max-width: 380px) {
+  .cards { grid-template-columns: 1fr; }
+  .card.wide { grid-column: span 1; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- BRAND -->
+  <div class="brand">
+    <div class="logo-ring">
+      <img src="./logo.png" alt="Viyaan AI">
+    </div>
+    <h1>Attendance Intelligence</h1>
+    <div class="tagline">Powered by Viyaan AI</div>
+  </div>
+
+  <!-- QUICK CHECK -->
+  <div class="quick-panel">
+    <div class="section-label">⚡ Quick Check</div>
+    <div class="quick-row">
+      <input type="number" id="qPresent" placeholder="Present classes" min="0">
+      <input type="number" id="qTotal"   placeholder="Total classes"   min="0">
+      <button class="btn-primary"
+        style="flex:0 0 auto;width:auto;padding:11px 20px;font-size:13px"
+        onclick="quickCheck()">Check</button>
+    </div>
+    <div class="quick-result" id="quickResult" style="display:none">
+      <div class="q-stat">
+        <div class="q-num" id="qPct">--</div>
+        <div class="q-lbl">Attendance</div>
+      </div>
+      <div class="q-stat">
+        <div class="q-num" id="qRisk" style="font-size:14px">--</div>
+        <div class="q-lbl">Risk</div>
+      </div>
+      <div class="q-stat">
+        <div class="q-num" id="qLeave">--</div>
+        <div class="q-lbl">Safe Leave</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEMESTER CONFIGURATION -->
+  <div class="panel">
+    <div class="section-title">⚙️ Semester Configuration</div>
+    <div class="sem-config-grid">
+      <div>
+        <label for="semTotalInput">Total Working Days</label>
+        <input type="number" id="semTotalInput" placeholder="e.g. 90" min="1">
+      </div>
+      <div>
+        <label for="semCurrentInput">Current Working Day</label>
+        <input type="number" id="semCurrentInput" placeholder="e.g. 52" min="0">
+      </div>
+    </div>
+    <button class="btn-secondary" style="width:100%;margin-top:4px" onclick="saveSemesterConfig()">
+      💾 Save Semester Days
+    </button>
+  </div>
+
+  <!-- SEMESTER PROGRESS -->
+  <div class="panel" id="semesterProgressPanel" style="display:none">
+    <div class="section-title">📅 Semester Progress</div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:12px">
+      <div>
+        <div class="card-value" id="spDay"       style="font-size:22px">--</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace">Current Day</div>
+      </div>
+      <div>
+        <div class="card-value" id="spTotal"     style="font-size:22px">--</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace">Total Days</div>
+      </div>
+      <div>
+        <div class="card-value" id="spRemaining" style="font-size:22px">--</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace">Days Left</div>
+      </div>
+      <div>
+        <div class="card-value" id="spPct"       style="font-size:22px">--%</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace">Progress</div>
+      </div>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="semBarFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUDENT PROFILE -->
+  <div class="section">
+    <div class="section-title">👤 Student Profile</div>
+    <input type="text" id="studentName" placeholder="Enter Student Name" style="margin-bottom:0">
+  </div>
+
+  <!-- SUBJECTS -->
+  <div class="section">
+    <div class="section-title">📚 Subjects</div>
+    <div id="subjects"></div>
+    <button class="btn-add" onclick="addSubject()">+ Add Subject</button>
+  </div>
+
+  <!-- DATA ACTIONS -->
+  <div class="btn-row">
+    <button class="btn-secondary" onclick="saveData()">💾 Save</button>
+    <button class="btn-secondary" onclick="loadData()">📂 Load</button>
+    <button class="btn-secondary" onclick="clearAll()">🗑 Clear</button>
+  </div>
+
+  <button class="btn-primary" onclick="analyze()" style="margin-bottom:8px">
+    Analyze Attendance
+  </button>
+  <button class="btn-share" id="shareBtn" onclick="shareResult()" style="display:none">
+    📤 Share My Result
+  </button>
+
+  <!-- RESULT CARDS -->
+  <div class="cards" id="resultCards" style="display:none">
+    <div class="card">
+      <div class="card-label">Attendance</div>
+      <div class="card-value" id="percentage">--</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Risk Level</div>
+      <div class="card-value" id="risk">--</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Safe Leave</div>
+      <div class="card-value" id="leave">--</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Recovery Needed</div>
+      <div class="card-value" id="recovery">--</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Forecast</div>
+      <div class="card-value" id="prediction" style="font-size:11px">--</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Semester Plan</div>
+      <div class="card-value" id="semesterplan" style="font-size:11px">--</div>
+    </div>
+    <div class="card wide">
+      <div class="card-label">AI Advisor</div>
+      <div class="card-value" id="advisor">--</div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-wrap" id="chartWrap" style="display:none">
+    <div class="section-title" style="margin-bottom:12px">📊 Subject Analytics</div>
+    <canvas id="attendanceChart"></canvas>
+    <div class="legend">
+      <span><span style="color:var(--safe)">■</span> SAFE ≥80%</span>
+      <span><span style="color:var(--warn)">■</span> WARNING 75–79%</span>
+      <span><span style="color:var(--crit)">■</span> CRITICAL &lt;75%</span>
+    </div>
+  </div>
+
+  <!-- SUBJECT RISK -->
+  <div class="panel" id="subjectRiskWrap" style="display:none">
+    <div class="section-title" style="margin-bottom:12px">🎯 Subject Risk</div>
+    <div id="subjectRiskPanel"><span class="empty-msg">No analysis yet</span></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="panel">
+    <div class="section-title" style="margin-bottom:12px">🕒 Attendance History</div>
+    <div id="historyPanel"><span class="empty-msg">No history yet</span></div>
+  </div>
+
+  <div class="footer">© 2026 Viyaan AI • Built by <b>Dharani Kumar</b></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═════════════════════════════════════════════════════
+   STATE
+═════════════════════════════════════════════════════ */
+var chart        = null;
+var lastAnalysis = null;
+
+/* ═════════════════════════════════════════════════════
+   GA4 HELPER — safe, logged, no duplicate wrapper
+═════════════════════════════════════════════════════ */
+function gaEvent(name) {
+  try {
+    if (typeof gtag === 'function') {
+      gtag('event', name);
+      console.log('[GA]', name);
+    }
+  } catch (e) { /* silent */ }
+}
+
+/* ═════════════════════════════════════════════════════
+   TOAST
+═════════════════════════════════════════════════════ */
+function showToast(msg, duration) {
+  duration = (typeof duration === 'number') ? duration : 2600;
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function () { t.classList.remove('show'); }, duration);
+}
+
+/* ═════════════════════════════════════════════════════
+   LOCALSTORAGE HELPERS
+═════════════════════════════════════════════════════ */
+function lsGet(key) {
+  try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+function lsSet(key, value) {
+  try { localStorage.setItem(key, String(value)); } catch (e) { /* silent */ }
+}
+function lsGetJSON(key, fallback) {
+  try {
+    var raw = localStorage.getItem(key);
+    if (raw === null || raw === '') return fallback;
+    return JSON.parse(raw);
+  } catch (e) { return fallback; }
+}
+function lsSetJSON(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* silent */ }
+}
+
+/* ═════════════════════════════════════════════════════
+   SEMESTER CONFIG — manual working-day model
+   Keys: semesterTotal, semesterCurrent
+═════════════════════════════════════════════════════ */
+function saveSemesterConfig() {
+  var totalRaw   = document.getElementById('semTotalInput').value.trim();
+  var currentRaw = document.getElementById('semCurrentInput').value.trim();
+
+  if (!totalRaw || !currentRaw) {
+    showToast('Enter both total and current working days');
+    return;
+  }
+
+  var total   = parseInt(totalRaw,   10);
+  var current = parseInt(currentRaw, 10);
+
+  if (isNaN(total)   || total < 1)   { showToast('Total working days must be at least 1'); return; }
+  if (isNaN(current) || current < 0) { showToast('Current working day cannot be negative'); return; }
+  if (current > total)               { showToast('Current day cannot exceed total days'); return; }
+
+  lsSet('semesterTotal',   total);
+  lsSet('semesterCurrent', current);
+  showToast('📅 Semester days saved');
+  gaEvent('semester_config_saved');
+  renderSemesterProgress();
+}
+
+function loadSemesterConfig() {
+  var total   = lsGet('semesterTotal');
+  var current = lsGet('semesterCurrent');
+  if (total   !== null) document.getElementById('semTotalInput').value   = total;
+  if (current !== null) document.getElementById('semCurrentInput').value = current;
+}
+
+function renderSemesterProgress() {
+  var totalRaw   = lsGet('semesterTotal');
+  var currentRaw = lsGet('semesterCurrent');
+  var panel      = document.getElementById('semesterProgressPanel');
+
+  if (totalRaw === null || currentRaw === null) { panel.style.display = 'none'; return; }
+
+  var total   = parseInt(totalRaw,   10);
+  var current = parseInt(currentRaw, 10);
+
+  if (isNaN(total) || isNaN(current) || total < 1) { panel.style.display = 'none'; return; }
+
+  current          = Math.min(Math.max(current, 0), total);
+  var remaining    = Math.max(total - current, 0);
+  var progress     = Math.min(Math.round((current / total) * 100), 100);
+
+  document.getElementById('spDay').textContent       = 'Day ' + current + ' / ' + total;
+  document.getElementById('spTotal').textContent     = total + ' days';
+  document.getElementById('spRemaining').textContent = remaining + ' days';
+  document.getElementById('spPct').textContent       = progress + '%';
+  panel.style.display = 'block';
+
+  setTimeout(function () {
+    document.getElementById('semBarFill').style.width = progress + '%';
+  }, 120);
+}
+
+/* ═════════════════════════════════════════════════════
+   SUBJECTS
+═════════════════════════════════════════════════════ */
+function addSubject(name, present, total, silent) {
+  name    = (name    != null) ? String(name)    : '';
+  present = (present != null) ? present         : '';
+  total   = (total   != null) ? total           : '';
+
+  var pInt  = parseInt(present, 10);
+  var tInt  = parseInt(total,   10);
+  var safeP = (!isNaN(pInt) && pInt >= 0) ? pInt : '';
+  var safeT = (!isNaN(tInt) && tInt >= 0) ? tInt : '';
+  var safeN = String(name)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  var row = document.createElement('div');
+  row.className = 'subject-row';
+  row.innerHTML =
+    '<div class="top-row">' +
+      '<input type="text"   class="subname"    placeholder="Subject Name" value="' + safeN  + '">' +
+      '<input type="number" class="subpresent" placeholder="Present"      value="' + safeP  + '" min="0">' +
+      '<input type="number" class="subtotal"   placeholder="Total"        value="' + safeT  + '" min="0">' +
+    '</div>' +
+    '<div class="sub-actions">' +
+      '<button class="btn-present" onclick="markPresent(this)">✓ Mark Present</button>' +
+      '<button class="btn-absent"  onclick="markAbsent(this)">✗ Mark Absent</button>' +
+      '<button class="btn-remove"  onclick="removeSubject(this)">✕</button>' +
+    '</div>';
+  document.getElementById('subjects').appendChild(row);
+
+  if (!silent) { gaEvent('subject_added'); }
+}
+
+function removeSubject(btn) {
+  var row = btn.closest('.subject-row');
+  if (row) row.remove();
+}
+
+function markPresent(btn) {
+  var row = btn.closest('.subject-row');
+  var p   = row.querySelector('.subpresent');
+  var t   = row.querySelector('.subtotal');
+  p.value = (parseInt(p.value, 10) || 0) + 1;
+  t.value = (parseInt(t.value, 10) || 0) + 1;
+  showToast('✓ Marked Present');
+}
+
+function markAbsent(btn) {
+  var row = btn.closest('.subject-row');
+  var t   = row.querySelector('.subtotal');
+  t.value = (parseInt(t.value, 10) || 0) + 1;
+  showToast('✗ Marked Absent');
+}
+
+/* ═════════════════════════════════════════════════════
+   GATHER SUBJECTS
+═════════════════════════════════════════════════════ */
+function gatherSubjects() {
+  var names    = document.getElementsByClassName('subname');
+  var presents = document.getElementsByClassName('subpresent');
+  var totals   = document.getElementsByClassName('subtotal');
+  var arr      = [];
+  for (var i = 0; i < names.length; i++) {
+    var p = parseInt(presents[i].value, 10);
+    var t = parseInt(totals[i].value,   10);
+    arr.push({
+      name:    names[i].value.trim(),
+      present: (!isNaN(p) && p >= 0) ? p : 0,
+      total:   (!isNaN(t) && t >= 0) ? t : 0
+    });
+  }
+  return arr;
+}
+
+/* ═════════════════════════════════════════════════════
+   SAVE / LOAD / CLEAR
+═════════════════════════════════════════════════════ */
+function saveData() {
+  lsSetJSON('attendanceData', {
+    name:     document.getElementById('studentName').value,
+    subjects: gatherSubjects()
+  });
+  showToast('💾 Attendance Saved');
+  gaEvent('attendance_saved');
+}
+
+function loadData() {
+  var student = lsGetJSON('attendanceData', null);
+  if (!student || typeof student !== 'object') { showToast('No saved data found'); return; }
+
+  document.getElementById('studentName').value  = student.name || '';
+  document.getElementById('subjects').innerHTML = '';
+  if (Array.isArray(student.subjects) && student.subjects.length > 0) {
+    student.subjects.forEach(function (s) { addSubject(s.name, s.present, s.total, true); });
+  } else {
+    addSubject('', '', '', true);
+  }
+  showToast('📂 Data Loaded');
+  gaEvent('attendance_loaded');
+}
+
+function clearAll() {
+  if (!confirm('Clear all subjects?')) return;
+  document.getElementById('subjects').innerHTML = '';
+  addSubject('', '', '', true);
+  gaEvent('attendance_cleared');
+}
+
+/* ═════════════════════════════════════════════════════
+   QUICK CHECK
+═════════════════════════════════════════════════════ */
+function quickCheck() {
+  var p = parseFloat(document.getElementById('qPresent').value);
+  var t = parseFloat(document.getElementById('qTotal').value);
+
+  if (isNaN(t) || t <= 0) { showToast('Enter a valid total greater than 0'); return; }
+  if (isNaN(p) || p < 0)  { showToast('Enter a valid present count');        return; }
+  if (p > t)               { showToast('Present cannot exceed total');         return; }
+
+  var pct   = parseFloat(((p / t) * 100).toFixed(2));
+  var risk  = classifyRisk(pct);
+  var color = riskCssVar(risk);
+
+  var leave = 0;
+  while ((p / (t + leave + 1)) * 100 >= 75) {
+    leave++;
+    if (leave > 10000) break;
+  }
+
+  document.getElementById('qPct').textContent   = pct + '%';
+  document.getElementById('qPct').style.color   = color;
+  document.getElementById('qRisk').textContent  = risk;
+  document.getElementById('qRisk').style.color  = color;
+  document.getElementById('qLeave').textContent = leave;
+  document.getElementById('quickResult').style.display = 'flex';
+
+  gaEvent('quick_check_used');
+}
+
+/* ═════════════════════════════════════════════════════
+   RISK HELPERS — single source of truth
+═════════════════════════════════════════════════════ */
+function classifyRisk(pct) {
+  if (pct >= 80) return 'SAFE';
+  if (pct >= 75) return 'WARNING';
+  if (pct >= 65) return 'CONDONATION_RISK';
+  return 'CRITICAL';
+}
+function riskCssClass(risk) {
+  return { SAFE:'safe', WARNING:'warn', CONDONATION_RISK:'warn', CRITICAL:'crit' }[risk] || '';
+}
+function riskCssVar(risk) {
+  return { SAFE:'var(--safe)', WARNING:'var(--warn)', CONDONATION_RISK:'var(--warn)', CRITICAL:'var(--crit)' }[risk] || 'var(--text)';
+}
+
+/* ═════════════════════════════════════════════════════
+   MAIN ANALYZE
+═════════════════════════════════════════════════════ */
+function analyze() {
+  gaEvent('analyze_clicked');
+
+  try {
+    var subjects      = gatherSubjects();
+    var total_present = 0;
+    var total_classes = 0;
+
+    for (var i = 0; i < subjects.length; i++) {
+      total_present += subjects[i].present;
+      total_classes += subjects[i].total;
+    }
+
+    if (total_classes <= 0) { showToast('Enter subject attendance data first'); return; }
+
+    var pctNum     = parseFloat(((total_present / total_classes) * 100).toFixed(2));
+    var percentage = pctNum.toFixed(2);
+    var risk       = classifyRisk(pctNum);
+    var cssClass   = riskCssClass(risk);
+
+    /* Safe leave */
+    var safe_leave = 0;
+    while ((total_present / (total_classes + safe_leave + 1)) * 100 >= 75) {
+      safe_leave++;
+      if (safe_leave > 10000) break;
+    }
+
+    /* Recovery */
+    var recovery = 0;
+    if (pctNum < 75) {
+      while (((total_present + recovery) / (total_classes + recovery)) * 100 < 75) {
+        recovery++;
+        if (recovery > 10000) break;
+      }
+    }
+
+    /* Forecast */
+    var attend10 = ((total_present + 10) / (total_classes + 10) * 100).toFixed(1);
+    var miss3    = (total_present / (total_classes + 3) * 100).toFixed(1);
+
+    /* Semester plan */
+    var remaining_classes = 30;
+    var semTotal   = parseInt(lsGet('semesterTotal'),   10);
+    var semCurrent = parseInt(lsGet('semesterCurrent'), 10);
+    if (!isNaN(semTotal) && !isNaN(semCurrent) && semTotal > semCurrent) {
+      remaining_classes = semTotal - semCurrent;
+    }
+    var needed = Math.ceil(0.75 * (total_classes + remaining_classes)) - total_present;
+    var semPlan;
+    if      (needed <= 0)                { semPlan = 'Already safe for semester ✓'; }
+    else if (needed > remaining_classes) { semPlan = '75% not achievable this semester'; }
+    else                                 { semPlan = 'Attend ' + needed + ' of next ' + remaining_classes + ' classes'; }
+
+    /* Advice */
+    var advice;
+    if      (risk === 'SAFE')             { advice = 'You are safe. You can miss up to ' + safe_leave + ' classes.'; }
+    else if (risk === 'WARNING')          { advice = 'Attendance close to limit. Avoid skipping upcoming classes.'; }
+    else if (risk === 'CONDONATION_RISK') { advice = 'Below required level. Attend next ' + recovery + ' classes to recover.'; }
+    else                                  { advice = 'Critical attendance. Attend next ' + recovery + ' classes immediately.'; }
+
+    /* Update DOM */
+    var elPct  = document.getElementById('percentage');
+    elPct.textContent = percentage + '%';
+    elPct.className   = 'card-value ' + cssClass;
+
+    var elRisk = document.getElementById('risk');
+    elRisk.textContent = risk;
+    elRisk.className   = 'card-value ' + cssClass;
+
+    document.getElementById('leave').textContent        = safe_leave;
+    document.getElementById('recovery').textContent     = recovery;
+    document.getElementById('prediction').textContent   = '+10 → ' + attend10 + '% | −3 → ' + miss3 + '%';
+    document.getElementById('semesterplan').textContent = semPlan;
+    document.getElementById('advisor').textContent      = advice;
+
+    /* Reveal panels — re-trigger animation by cloning */
+    var rc = document.getElementById('resultCards');
+    rc.style.display = 'grid';
+    rc.style.animation = 'none';
+    rc.offsetHeight; /* reflow */
+    rc.style.animation = '';
+
+    document.getElementById('chartWrap').style.display       = 'block';
+    document.getElementById('subjectRiskWrap').style.display = 'block';
+    document.getElementById('shareBtn').style.display        = 'block';
+
+    drawChart(subjects);
+    drawRiskPanel(subjects);
+
+    /* History */
+    var history = lsGetJSON('attendanceHistory', []);
+    if (!Array.isArray(history)) history = [];
+    history.unshift({
+      date:       new Date().toLocaleString(),
+      student:    document.getElementById('studentName').value || 'Student',
+      percentage: percentage
+    });
+    lsSetJSON('attendanceHistory', history.slice(0, 5));
+    renderHistory();
+
+    lastAnalysis = { percentage: percentage, risk: risk, safe_leave: safe_leave };
+    showToast('Analysis complete ✓');
+
+  } catch (err) {
+    console.error('[analyze]', err);
+    showToast('Error: please check your inputs');
+  }
+}
+
+/* ═════════════════════════════════════════════════════
+   CHART
+═════════════════════════════════════════════════════ */
+function drawChart(subjects) {
+  var labels = [], values = [], colors = [];
+  for (var i = 0; i < subjects.length; i++) {
+    var s = subjects[i];
+    if (s.total <= 0) continue;
+    var p = (s.present / s.total) * 100;
+    labels.push(s.name || '?');
+    values.push(parseFloat(p.toFixed(2)));
+    colors.push(p >= 80 ? '#00e676' : p >= 75 ? '#ffb300' : '#ff3d5a');
+  }
+  if (labels.length === 0) return;
+  if (chart) { chart.destroy(); chart = null; }
+  chart = new Chart(document.getElementById('attendanceChart'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label:           'Attendance %',
+        data:            values,
+        backgroundColor: colors,
+        borderRadius:    8,
+        borderSkipped:   false
+      }]
+    },
+    options: {
+      responsive: true,
+      animation:  { duration: 600, easing: 'easeOutQuart' },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          grid:  { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#4a6fa5', font: { family: "'JetBrains Mono'" } }
+        },
+        x: {
+          grid:  { display: false },
+          ticks: { color: '#4a6fa5', font: { family: "'JetBrains Mono'" } }
+        }
+      },
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: 'rgba(10,21,32,0.95)',
+        borderColor:     'rgba(0,200,255,0.2)',
+        borderWidth:     1,
+        titleColor:      '#e8f4ff',
+        bodyColor:       '#a8c4d8',
+        padding:         10
+      }}
+    }
+  });
+}
+
+/* ═════════════════════════════════════════════════════
+   RISK PANEL
+═════════════════════════════════════════════════════ */
+function drawRiskPanel(subjects) {
+  var html = '';
+  for (var i = 0; i < subjects.length; i++) {
+    var s = subjects[i];
+    if (s.total <= 0) continue;
+    var p   = (s.present / s.total) * 100;
+    var cls = 'safe', lbl = 'SAFE';
+    if (p < 80 && p >= 75) { cls = 'warn'; lbl = 'WARNING';  }
+    if (p < 75)            { cls = 'crit'; lbl = 'CRITICAL'; }
+    html +=
+      '<div class="risk-item">' +
+        '<span>' + escHtml(s.name || 'Unnamed') + '</span>' +
+        '<div style="display:flex;align-items:center;gap:10px">' +
+          '<span style="font-size:12px;color:var(--muted);font-family:\'JetBrains Mono\',monospace">' + p.toFixed(1) + '%</span>' +
+          '<span class="risk-badge ' + cls + '">' + lbl + '</span>' +
+        '</div>' +
+      '</div>';
+  }
+  document.getElementById('subjectRiskPanel').innerHTML =
+    html || '<span class="empty-msg">No valid subjects to display</span>';
+}
+
+/* ═════════════════════════════════════════════════════
+   HISTORY
+═════════════════════════════════════════════════════ */
+function renderHistory() {
+  var history = lsGetJSON('attendanceHistory', []);
+  var panel   = document.getElementById('historyPanel');
+  if (!Array.isArray(history) || history.length === 0) {
+    panel.innerHTML = '<span class="empty-msg">No history yet</span>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < history.length; i++) {
+    var h   = history[i];
+    var pf  = parseFloat(h.percentage);
+    var col = pf >= 80 ? 'var(--safe)' : pf >= 75 ? 'var(--warn)' : 'var(--crit)';
+    html +=
+      '<div class="history-item">' +
+        '<span>' + escHtml(h.student || 'Student') + '</span>' +
+        '<span class="h-pct" style="color:' + col + '">' + escHtml(String(h.percentage || '--')) + '%</span>' +
+        '<span class="h-date">' + escHtml(h.date || '') + '</span>' +
+      '</div>';
+  }
+  panel.innerHTML = html;
+}
+
+/* ═════════════════════════════════════════════════════
+   SHARE
+═════════════════════════════════════════════════════ */
+function shareResult() {
+  if (!lastAnalysis) { showToast('Run analysis first'); return; }
+  var msg =
+    'My attendance is ' + lastAnalysis.percentage + '%. ' +
+    'Risk: ' + lastAnalysis.risk + '. ' +
+    'I can safely miss ' + lastAnalysis.safe_leave + ' more classes.\n' +
+    'Check yours: https://viyaan.ai';
+
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    navigator.clipboard.writeText(msg)
+      .then(function () { showToast('📋 Copied to clipboard!'); })
+      .catch(function () { clipboardFallback(msg); });
+  } else {
+    clipboardFallback(msg);
+  }
+  gaEvent('share_clicked');
+}
+
+function clipboardFallback(text) {
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('📋 Copied to clipboard!');
+  } catch (e) { showToast('Copy failed — please copy manually'); }
+}
+
+/* ═════════════════════════════════════════════════════
+   UTILITY
+═════════════════════════════════════════════════════ */
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ═════════════════════════════════════════════════════
+   PWA — Service Worker Registration
+═════════════════════════════════════════════════════ */
+function registerSW() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').then(function (reg) {
+        console.log('[SW] Registered, scope:', reg.scope);
+      }).catch(function (err) {
+        console.warn('[SW] Registration failed:', err);
+      });
+    });
+  }
+}
+registerSW();
+
+/* ═════════════════════════════════════════════════════
+   INIT
+═════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', function () {
+  loadSemesterConfig();
+  renderSemesterProgress();
+
+  var student = lsGetJSON('attendanceData', null);
+  if (student && typeof student === 'object') {
+    document.getElementById('studentName').value = student.name || '';
+    if (Array.isArray(student.subjects) && student.subjects.length > 0) {
+      student.subjects.forEach(function (s) { addSubject(s.name, s.present, s.total, true); });
+    } else {
+      addSubject('', '', '', true);
+    }
+  } else {
+    addSubject('', '', '', true);
+  }
+
+  renderHistory();
+});
+</script>
+</body>
+</html>
